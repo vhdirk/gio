@@ -10,7 +10,6 @@ deprecate_by_min_version = true
 
 generate = [
     # "Gio.Task",
-    "Gio.Action",
     "Gio.ActionMap",
     "Gio.AppInfoCreateFlags",
     "Gio.ApplicationFlags",
@@ -158,8 +157,14 @@ status = "generate"
         string_type = "filename"
 
 [[object]]
+name = "Gio.Action"
+status = "generate"
+subclassing = true
+
+[[object]]
 name = "Gio.ActionGroup"
 status = "generate"
+subclassing = true
     [[object.function]]
     name = "query_action"
     ignore = true
@@ -201,6 +206,7 @@ status = "generate"
 name = "Gio.Application"
 status = "generate"
 manual_traits = ["ApplicationExtManual"]
+subclassing = true
     [[object.signal]]
     name = "open"
     ignore = true

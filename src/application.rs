@@ -1,6 +1,7 @@
 use gio_sys;
 use glib::object::Cast;
 use glib::object::IsA;
+use glib::object::IsClassFor;
 use glib::signal::{connect_raw, SignalHandlerId};
 use glib::translate::*;
 use glib::GString;
@@ -10,6 +11,7 @@ use std::boxed::Box as Box_;
 use std::mem::transmute;
 use Application;
 use File;
+use std::ops;
 
 pub trait ApplicationExtManual {
     fn run(&self, argv: &[String]) -> i32;
@@ -38,4 +40,29 @@ where P: IsA<Application> {
     let f: &F = &*(f as *const F);
     let files: Vec<File> = FromGlibContainer::from_glib_none_num(files, n_files as usize);
     f(&Application::from_glib_borrow(this).unsafe_cast(), &files, &GString::from_glib_borrow(hint))
+}
+
+
+#[repr(C)]
+pub struct ApplicationClass(gio_sys::GApplicationClass);
+
+unsafe impl IsClassFor for ApplicationClass {
+    type Instance = ::Application;
+}
+
+unsafe impl Send for ApplicationClass {}
+unsafe impl Sync for ApplicationClass {}
+
+impl ops::Deref for ApplicationClass {
+    type Target = glib::ObjectClass;
+
+    fn deref(&self) -> &Self::Target {
+        self.upcast_ref()
+    }
+}
+
+impl ops::DerefMut for ApplicationClass {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.upcast_ref_mut()
+    }
 }
