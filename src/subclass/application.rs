@@ -6,8 +6,8 @@ use std::ptr;
 
 use libc;
 
-use ffi;
-use glib_ffi;
+use gio_sys;
+use glib_sys;
 
 use super::prelude::*;
 use glib;
@@ -39,13 +39,13 @@ impl ArgumentList {
     // remove the item at index `idx` and shift the raw array
     pub fn remove(&mut self, idx: usize) {
         unsafe {
-            let n_args = glib_ffi::g_strv_length(*self.ptr);
+            let n_args = glib_sys::g_strv_length(*self.ptr);
             assert!((n_args as usize) == self.items.len());
             assert!((idx as u32) < n_args);
 
             self.items.remove(idx);
 
-            glib_ffi::g_free(((*self.ptr).offset(idx as isize)) as *mut libc::c_void);
+            glib_sys::g_free(((*self.ptr).offset(idx as isize)) as *mut libc::c_void);
 
             for i in (idx as u32)..n_args - 1 {
                 ptr::write(
@@ -79,7 +79,7 @@ impl convert::Into<Vec<OsString>> for ArgumentList {
 }
 
 
-pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
+pub trait ApplicationImpl: ObjectImpl + 'static {
 
     fn activate(&self, application: &::Application){
         self.parent_activate(application)
@@ -124,7 +124,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_activate(&self, application: &::Application){
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
             .activate
             .map(|f|{ f(application.to_glib_none().0); })
@@ -135,7 +135,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_after_emit(&self, application: &::Application, platform_data: &glib::Variant){
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
             .after_emit
             .map(|f|{ f(application.to_glib_none().0,platform_data.to_glib_none().0); })
@@ -146,7 +146,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_before_emit(&self, application: &::Application, platform_data: &glib::Variant){
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
             .before_emit
             .map(|f|{ f(application.to_glib_none().0,platform_data.to_glib_none().0); })
@@ -157,7 +157,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_command_line(&self, application: &::Application, cmd_line: &::ApplicationCommandLine) -> i32 {
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
                 .command_line
                 .map(|f| f(application.to_glib_none().0, cmd_line.to_glib_none().0))
@@ -168,7 +168,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_local_command_line(&self, application: &::Application, arguments: &mut ArgumentList) -> Option<i32> {
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             let mut exit_status = 0;
             let success = (*parent_class)
                 .local_command_line
@@ -177,10 +177,10 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
                     arguments.refresh();
                     ret
                 })
-                .unwrap_or(glib_ffi::GFALSE);
+                .unwrap_or(glib_sys::GFALSE);
 
             match success {
-                glib_ffi::GTRUE => Some(exit_status),
+                glib_sys::GTRUE => Some(exit_status),
                 _ => None,
             }
         }
@@ -189,7 +189,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_open(&self, application: &::Application, files: /*Ignored*/&[::File], hint: &str){
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
             .open
             .map(|f|{ let n_files = files.len() as i32; f(application.to_glib_none().0,files.to_glib_none().0,n_files,hint.to_glib_none().0); })
@@ -200,7 +200,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_quit_mainloop(&self, application: &::Application){
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
             .quit_mainloop
             .map(|f|{ f(application.to_glib_none().0); })
@@ -211,7 +211,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_run_mainloop(&self, application: &::Application){
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
             .run_mainloop
             .map(|f|{ f(application.to_glib_none().0); })
@@ -222,7 +222,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_shutdown(&self, application: &::Application){
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
             .shutdown
             .map(|f|{ f(application.to_glib_none().0); })
@@ -233,7 +233,7 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
     fn parent_startup(&self, application: &::Application){
         unsafe {
             let data = self.get_type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::GApplicationClass;
+            let parent_class = data.as_ref().get_parent_class() as *mut gio_sys::GApplicationClass;
             (*parent_class)
             .startup
             .map(|f|{ f(application.to_glib_none().0); })
@@ -243,17 +243,13 @@ pub trait ApplicationImpl: ObjectImpl + Send + Sync + 'static {
 
 }
 
-pub unsafe trait ApplicationClassSubclassExt: Sized + 'static {}
-
-unsafe impl ApplicationClassSubclassExt for ApplicationClass {}
-
 unsafe impl<T: ObjectSubclass + ApplicationImpl> IsSubclassable<T> for ApplicationClass
 {
     fn override_vfuncs(&mut self) {
         <glib::ObjectClass as IsSubclassable<T>>::override_vfuncs(self);
 
         unsafe {
-            let klass = &mut *(self as *const Self as *mut ffi::GApplicationClass);
+            let klass = &mut *(self as *const Self as *mut gio_sys::GApplicationClass);
             klass.activate = Some(application_activate::<T>);
             klass.after_emit = Some(application_after_emit::<T>);
             klass.before_emit = Some(application_before_emit::<T>);
@@ -270,7 +266,7 @@ unsafe impl<T: ObjectSubclass + ApplicationImpl> IsSubclassable<T> for Applicati
 
 
 unsafe extern "C" fn application_activate<T: ObjectSubclass>
-(ptr: *mut ffi::GApplication)
+(ptr: *mut gio_sys::GApplication)
 where
     T: ApplicationImpl
 {
@@ -282,7 +278,7 @@ where
 }
 
 unsafe extern "C" fn application_after_emit<T: ObjectSubclass>
-(ptr: *mut ffi::GApplication, platform_data: *mut glib_ffi::GVariant)
+(ptr: *mut gio_sys::GApplication, platform_data: *mut glib_sys::GVariant)
 where
     T: ApplicationImpl
 {
@@ -294,7 +290,7 @@ where
 }
 
 unsafe extern "C" fn application_before_emit<T: ObjectSubclass>
-(ptr: *mut ffi::GApplication, platform_data: *mut glib_ffi::GVariant)
+(ptr: *mut gio_sys::GApplication, platform_data: *mut glib_sys::GVariant)
 where
     T: ApplicationImpl
 {
@@ -306,7 +302,7 @@ where
 }
 
 unsafe extern "C" fn application_command_line<T: ObjectSubclass>
-(ptr: *mut ffi::GApplication, command_line: *mut ffi::GApplicationCommandLine) -> libc::c_int
+(ptr: *mut gio_sys::GApplication, command_line: *mut gio_sys::GApplicationCommandLine) -> libc::c_int
 where
     T: ApplicationImpl
 {
@@ -319,10 +315,10 @@ where
 }
 
 unsafe extern "C" fn application_local_command_line<T: ObjectSubclass>(
-    ptr: *mut ffi::GApplication,
+    ptr: *mut gio_sys::GApplication,
     arguments: *mut *mut *mut libc::c_char,
     exit_status: *mut libc::c_int,
-) -> glib_ffi::gboolean
+) -> glib_sys::gboolean
 where
     T: ApplicationImpl,
 {
@@ -335,15 +331,15 @@ where
     match imp.local_command_line(&wrap, &mut args) {
         Some(ret) => {
             ptr::write(exit_status, ret);
-            glib_ffi::GTRUE
+            glib_sys::GTRUE
         }
-        None => glib_ffi::GFALSE,
+        None => glib_sys::GFALSE,
     }
 }
 
 unsafe extern "C" fn application_open<T: ObjectSubclass>(
-    ptr: *mut ffi::GApplication,
-    files: *mut *mut ffi::GFile,
+    ptr: *mut gio_sys::GApplication,
+    files: *mut *mut gio_sys::GFile,
     num_files: libc::c_int,
     hint: *const libc::c_char,
 ) where
@@ -360,7 +356,7 @@ unsafe extern "C" fn application_open<T: ObjectSubclass>(
 }
 
 unsafe extern "C" fn application_quit_mainloop<T: ObjectSubclass>
-(ptr: *mut ffi::GApplication)
+(ptr: *mut gio_sys::GApplication)
 where
     T: ApplicationImpl
 {
@@ -372,7 +368,7 @@ where
 }
 
 unsafe extern "C" fn application_run_mainloop<T: ObjectSubclass>
-(ptr: *mut ffi::GApplication)
+(ptr: *mut gio_sys::GApplication)
 where
     T: ApplicationImpl
 {
@@ -384,7 +380,7 @@ where
 }
 
 unsafe extern "C" fn application_shutdown<T: ObjectSubclass>
-(ptr: *mut ffi::GApplication)
+(ptr: *mut gio_sys::GApplication)
 where
     T: ApplicationImpl
 {
@@ -396,7 +392,7 @@ where
 }
 
 unsafe extern "C" fn application_startup<T: ObjectSubclass>
-(ptr: *mut ffi::GApplication)
+(ptr: *mut gio_sys::GApplication)
 where
     T: ApplicationImpl
 {
